@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harrison 22e — Asistente de Examen</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#f7f6f3; --surface:#fff; --surface2:#f1efe8;
+  --border:rgba(0,0,0,0.11); --border2:rgba(0,0,0,0.2);
+  --text:#1a1a18; --text2:#5f5e5a; --text3:#888780;
+  --accent:#185fa5; --accent-bg:#e6f1fb; --accent-t:#0c447c;
+  --r:12px; --rs:8px;
+  --c-blue-bg:#e6f1fb;   --c-blue-t:#0c447c;   --c-blue-b:#378add;
+  --c-teal-bg:#e1f5ee;   --c-teal-t:#0f6e56;   --c-teal-b:#1d9e75;
+  --c-purple-bg:#eeedfe; --c-purple-t:#3c3489; --c-purple-b:#7f77dd;
+  --c-amber-bg:#faeeda;  --c-amber-t:#854f0b;  --c-amber-b:#ef9f27;
+  --c-coral-bg:#faece7;  --c-coral-t:#993c1d;  --c-coral-b:#d85a30;
+  --c-pink-bg:#fbeaf0;   --c-pink-t:#72243e;   --c-pink-b:#d4537e;
+  --c-green-bg:#eaf3de;  --c-green-t:#3b6d11;  --c-green-b:#639922;
+  --c-red-bg:#fcebeb;    --c-red-t:#791f1f;    --c-red-b:#e24b4a;
+  --c-gray-bg:#f1efe8;   --c-gray-t:#444441;   --c-gray-b:#888780;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1a; --surface:#252522; --surface2:#2c2c2a;
+    --border:rgba(255,255,255,0.09); --border2:rgba(255,255,255,0.18);
+    --text:#f0ede6; --text2:#b4b2a9; --text3:#888780;
+    --accent:#378add; --accent-bg:#042c53; --accent-t:#b5d4f4;
+    --c-blue-bg:#042c53;   --c-blue-t:#b5d4f4;
+    --c-teal-bg:#04342c;   --c-teal-t:#9fe1cb;
+    --c-purple-bg:#26215c; --c-purple-t:#cecbf6;
+    --c-amber-bg:#412402;  --c-amber-t:#fac775;
+    --c-coral-bg:#4a1b0c;  --c-coral-t:#f0997b;
+    --c-pink-bg:#4b1528;   --c-pink-t:#ed93b1;
+    --c-green-bg:#173404;  --c-green-t:#c0dd97;
+    --c-red-bg:#501313;    --c-red-t:#f7c1c1;
+    --c-gray-bg:#2c2c2a;   --c-gray-t:#d3d1c7;
+  }
+}
+
+body{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; }
+
+/* HEADER */
+header{ background:var(--surface); border-bottom:.5px solid var(--border); padding:.85rem 1.25rem; display:flex; align-items:center; gap:10px; position:sticky; top:0; z-index:30; }
+.logo{ width:32px; height:32px; background:var(--c-blue-bg); border-radius:var(--rs); display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:16px; flex-shrink:0; }
+header h1{ font-size:14px; font-weight:500; }
+header p{ font-size:11px; color:var(--text3); }
+.hbadge{ margin-left:auto; font-size:11px; padding:3px 9px; background:var(--c-green-bg); color:var(--c-green-t); border-radius:20px; font-weight:500; white-space:nowrap; }
+
+/* TAB BAR */
+.tab-bar{ background:var(--surface); border-bottom:.5px solid var(--border); display:flex; padding:0 .75rem; position:sticky; top:54px; z-index:20; }
+.tab-btn{ display:flex; align-items:center; gap:5px; padding:10px 16px; font-size:13px; font-weight:500; color:var(--text3); border:none; background:transparent; border-bottom:2px solid transparent; cursor:pointer; transition:color .15s,border-color .15s; border-radius:0; font-family:inherit; }
+.tab-btn:hover{ color:var(--text); background:transparent; }
+.tab-btn.active{ color:var(--accent); border-bottom-color:var(--accent); }
+.tab-btn i{ font-size:15px; }
+
+/* PANELS */
+.tab-panel{ display:none; }
+.tab-panel.active{ display:block; }
+main{ flex:1; max-width:760px; width:100%; margin:0 auto; padding:1.25rem 1rem 5.5rem; display:flex; flex-direction:column; gap:1rem; }
+
+/* BUTTONS */
+button{ display:inline-flex; align-items:center; gap:5px; padding:8px 14px; border-radius:var(--rs); border:.5px solid var(--border2); background:transparent; color:var(--text); font-size:13px; font-weight:500; cursor:pointer; transition:background .1s; font-family:inherit; }
+button:hover{ background:var(--surface2); }
+button:active{ transform:scale(.98); }
+button.primary{ background:var(--accent); color:#fff; border-color:transparent; }
+button.primary:hover{ opacity:.9; background:var(--accent); }
+button.danger{ color:#a32d2d; border-color:rgba(162,45,45,.25); }
+button.danger:hover{ background:#fcebeb; }
+button:disabled{ opacity:.4; cursor:not-allowed; pointer-events:none; }
+@media(prefers-color-scheme:dark){ button.danger{ color:#f09595; border-color:rgba(240,149,149,.25); } button.danger:hover{ background:#501313; } }
+
+/* UPLOAD */
+.upload-card{ background:var(--surface); border:1.5px dashed var(--border2); border-radius:var(--r); padding:2rem 1.5rem; text-align:center; cursor:pointer; transition:border-color .15s,background .15s; position:relative; }
+.upload-card:hover,.upload-card.drag-over{ border-color:var(--accent); background:var(--accent-bg); }
+.upload-card input[type=file]{ position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.upload-icon{ font-size:34px; color:var(--text3); margin-bottom:.6rem; }
+.upload-card h2{ font-size:14px; font-weight:500; margin-bottom:3px; }
+.upload-card p{ font-size:12px; color:var(--text3); }
+
+/* PREVIEW */
+.preview-wrap{ background:var(--surface); border:.5px solid var(--border); border-radius:var(--r); overflow:hidden; }
+.preview-wrap img{ width:100%; max-height:300px; object-fit:contain; display:block; background:var(--surface2); }
+.preview-toolbar{ display:flex; align-items:center; gap:8px; padding:9px 12px; border-top:.5px solid var(--border); }
+.preview-toolbar span{ font-size:12px; color:var(--text2); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* CONTEXT */
+.context-card{ background:var(--surface); border:.5px solid var(--border); border-radius:var(--r); overflow:hidden; }
+.context-card label{ display:block; font-size:11px; font-weight:500; color:var(--text3); padding:9px 13px 0; text-transform:uppercase; letter-spacing:.04em; }
+.context-card textarea{ width:100%; border:none; background:transparent; color:var(--text); font-family:inherit; font-size:13px; line-height:1.6; padding:7px 13px 11px; resize:none; outline:none; min-height:58px; }
+.context-card textarea::placeholder{ color:var(--text3); }
+
+/* ANSWER */
+.answer-card{ background:var(--surface); border:.5px solid var(--border); border-radius:var(--r); overflow:hidden; }
+.answer-header{ display:flex; align-items:center; gap:8px; padding:11px 15px; border-bottom:.5px solid var(--border); background:var(--accent-bg); }
+.answer-header i{ color:var(--accent); font-size:17px; }
+.answer-header span{ font-size:13px; font-weight:500; color:var(--accent-t); }
+.answer-body{ padding:1.1rem 1.4rem; font-size:14px; line-height:1.8; color:var(--text); white-space:pre-wrap; }
+
+/* LOADING */
+.loading-wrap{ display:flex; flex-direction:column; align-items:center; gap:10px; padding:2.2rem 1.5rem; }
+.spinner{ width:28px; height:28px; border:2.5px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.loading-wrap p{ font-size:13px; color:var(--text2); text-align:center; }
+.loading-wrap small{ font-size:11px; color:var(--text3); }
+
+/* ERROR */
+.error-card{ background:var(--c-red-bg); border:.5px solid rgba(162,45,45,.2); border-radius:var(--r); padding:1rem 1.2rem; color:var(--c-red-t); font-size:13px; line-height:1.6; display:flex; gap:9px; align-items:flex-start; }
+.error-card i{ font-size:17px; flex-shrink:0; margin-top:1px; }
+
+/* ACTION BAR */
+.action-bar{ position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:.5px solid var(--border); padding:.65rem 1rem; display:flex; justify-content:center; gap:8px; z-index:25; }
+.action-bar button{ min-width:148px; justify-content:center; }
+#summaryActionBar{ display:none; }
+
+/* ═══ RESÚMENES ═══ */
+
+/* Search */
+.search-wrap{ position:relative; }
+.search-wrap i.ti-search{ position:absolute; left:11px; top:50%; transform:translateY(-50%); font-size:15px; color:var(--text3); pointer-events:none; }
+.search-wrap input{ width:100%; padding:9px 13px 9px 34px; border:.5px solid var(--border2); border-radius:var(--rs); background:var(--surface); color:var(--text); font-size:13px; font-family:inherit; outline:none; transition:border-color .15s; }
+.search-wrap input:focus{ border-color:var(--accent); }
+.search-wrap input::placeholder{ color:var(--text3); }
+
+/* Specialty grid */
+.spec-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; }
+.spec-card{ background:var(--surface); border:.5px solid var(--border); border-radius:var(--r); padding:1rem; cursor:pointer; transition:border-color .15s,background .15s; display:flex; flex-direction:column; gap:6px; text-align:left; }
+.spec-card:hover{ border-color:var(--accent); }
+.spec-icon{ width:34px; height:34px; border-radius:var(--rs); display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+.spec-name{ font-size:13px; font-weight:500; color:var(--text); line-height:1.3; }
+.spec-count{ font-size:11px; color:var(--text3); }
+
+/* Chapter list */
+.chap-list{ display:flex; flex-direction:column; gap:6px; }
+.chap-row{ background:var(--surface); border:.5px solid var(--border); border-radius:var(--rs); display:flex; align-items:center; gap:10px; padding:11px 13px; cursor:pointer; transition:background .12s,border-color .12s; }
+.chap-row:hover{ background:var(--accent-bg); border-color:var(--accent); }
+.chap-num{ font-size:10px; font-weight:500; padding:3px 7px; border-radius:5px; white-space:nowrap; flex-shrink:0; }
+.chap-name{ font-size:13px; color:var(--text); flex:1; line-height:1.35; }
+.chap-row>.ti{ color:var(--text3); font-size:13px; flex-shrink:0; }
+
+/* Breadcrumb */
+.breadcrumb{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text3); flex-wrap:wrap; }
+.breadcrumb span{ cursor:pointer; }
+.breadcrumb span:hover{ color:var(--accent); }
+.breadcrumb .sep{ font-size:10px; }
+.breadcrumb .cur{ color:var(--text); font-weight:500; cursor:default; }
+
+/* Summary view */
+.sum-header{ background:var(--surface); border:.5px solid var(--border); border-radius:var(--r); padding:.9rem 1.1rem; display:flex; align-items:flex-start; gap:12px; }
+.sum-hicon{ width:38px; height:38px; border-radius:var(--rs); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.sum-hlabel{ font-size:10px; color:var(--text3); font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+.sum-htitle{ font-size:15px; font-weight:500; color:var(--text); margin:2px 0; line-height:1.3; }
+.sum-hsub{ font-size:11px; color:var(--text3); }
+
+.sum-body{ background:var(--surface); border:.5px solid var(--border); border-radius:var(--r); padding:1.25rem 1.4rem; font-size:14px; line-height:1.85; color:var(--text); white-space:pre-wrap; }
+.sum-body.lbody{ display:flex; flex-direction:column; align-items:center; gap:10px; padding:2.5rem 1.5rem; }
+
+.sec-lbl{ font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:.05em; display:block; margin-top:1.1rem; margin-bottom:3px; }
+.sec-lbl:first-child{ margin-top:0; }
+
+/* View states */
+#viewSpecs,#viewChaps,#viewSum{ display:none; }
+#viewSpecs.vopen,#viewChaps.vopen,#viewSum.vopen{ display:flex; flex-direction:column; gap:1rem; }
+
+.slabel{ font-size:11px; font-weight:500; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><i class="ti ti-book-2" aria-hidden="true"></i></div>
+  <div>
+    <h1>Asistente de Examen</h1>
+    <p>Harrison · Principios de Medicina Interna 22e</p>
+  </div>
+  <div class="hbadge"><i class="ti ti-sparkles"></i> IA médica</div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" id="tabExam" onclick="switchTab('exam')">
+    <i class="ti ti-camera" aria-hidden="true"></i> Resolver examen
+  </button>
+  <button class="tab-btn" id="tabSum" onclick="switchTab('sum')">
+    <i class="ti ti-notebook" aria-hidden="true"></i> Resúmenes
+  </button>
+</div>
+
+<!-- ═══ PANEL EXAMEN ═══ -->
+<div class="tab-panel active" id="panelExam">
+<main>
+  <div class="upload-card" id="uploadZone">
+    <input type="file" id="fileInput" accept="image/*" capture="environment">
+    <div class="upload-icon"><i class="ti ti-camera-up" aria-hidden="true"></i></div>
+    <h2>Sube la foto de tu pregunta</h2>
+    <p>Toma una foto del examen o elige una imagen</p>
+  </div>
+  <div class="preview-wrap" id="previewWrap" style="display:none;">
+    <img id="previewImg" alt="Imagen de la pregunta">
+    <div class="preview-toolbar">
+      <span id="fileName">imagen.jpg</span>
+      <button class="danger" onclick="clearImage()"><i class="ti ti-trash"></i> Quitar</button>
+    </div>
+  </div>
+  <div class="context-card">
+    <label for="contextInput">Contexto adicional (opcional)</label>
+    <textarea id="contextInput" placeholder="Ej: opción múltiple, cardiología, RIII…"></textarea>
+  </div>
+  <div id="answerArea"></div>
+</main>
+<div class="action-bar" id="examActionBar">
+  <button id="solveBtn" class="primary" onclick="solveQuestion()" disabled>
+    <i class="ti ti-send"></i> Resolver con Harrison
+  </button>
+  <button onclick="resetAll()"><i class="ti ti-refresh"></i> Nueva pregunta</button>
+</div>
+</div>
+
+<!-- ═══ PANEL RESÚMENES ═══ -->
+<div class="tab-panel" id="panelSum">
+<main>
+
+  <div class="search-wrap">
+    <i class="ti ti-search" aria-hidden="true"></i>
+    <input type="text" id="chapSearch" placeholder="Buscar capítulo, diagnóstico o tema…" oninput="onSearch()">
+  </div>
+
+  <!-- Vista 1: Especialidades -->
+  <div id="viewSpecs" class="vopen">
+    <span class="slabel">Especialidad clínica</span>
+    <div class="spec-grid" id="specGrid"></div>
+  </div>
+
+  <!-- Vista 2: Capítulos de especialidad -->
+  <div id="viewChaps">
+    <div class="breadcrumb" id="breadChaps"></div>
+    <div class="chap-list" id="chapList"></div>
+  </div>
+
+  <!-- Vista 3: Resumen de capítulo -->
+  <div id="viewSum">
+    <div class="breadcrumb" id="breadSum"></div>
+    <div class="sum-header" id="sumHeader"></div>
+    <div class="sum-body" id="sumBody"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:.25rem;">
+      <button onclick="copySummary()"><i class="ti ti-copy"></i> Copiar resumen</button>
+    </div>
+  </div>
+
+</main>
+<div class="action-bar" id="summaryActionBar">
+  <button id="backBtn" onclick="goBack()"><i class="ti ti-arrow-left"></i> Atrás</button>
+</div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   ESPECIALIDADES Y CAPÍTULOS — Harrison 22e completo
+   Organizado por especialidad clínica
+═══════════════════════════════════════════════════════════ */
+const SPECIALTIES = [
+  { id:'cardio',    name:'Cardiología',            icon:'ti-heartbeat',   color:'teal'   },
+  { id:'nefro',     name:'Nefrología',              icon:'ti-droplet',     color:'blue'   },
+  { id:'gastro',    name:'Gastroenterología',       icon:'ti-pill',        color:'amber'  },
+  { id:'endocrino', name:'Endocrinología',          icon:'ti-dna',         color:'purple' },
+  { id:'neumo',     name:'Neumología',              icon:'ti-lungs',       color:'teal'   },
+  { id:'neuro',     name:'Neurología',              icon:'ti-brain',       color:'purple' },
+  { id:'infecto',   name:'Infectología',            icon:'ti-virus',       color:'coral'  },
+  { id:'hemato',    name:'Hematología y Oncología', icon:'ti-activity',    color:'red'    },
+  { id:'reuma',     name:'Reumatología',            icon:'ti-bone',        color:'amber'  },
+  { id:'endocrino2',name:'Metabolismo y Nutrición', icon:'ti-calculator',  color:'green'  },
+  { id:'ci',        name:'Cuidados Intensivos',     icon:'ti-urgent',      color:'red'    },
+  { id:'dermato',   name:'Dermatología',            icon:'ti-eye',         color:'pink'   },
+  { id:'farmaco',   name:'Farmacología',            icon:'ti-flask',       color:'gray'   },
+  { id:'mani',      name:'Manifestaciones Cardinales', icon:'ti-stethoscope', color:'blue' },
+  { id:'global',    name:'Medicina General y Global', icon:'ti-world',     color:'green'  },
+];
+
+const CHAPTERS = {
+cardio:[
+  {n:'Cap. 243',t:'Estudio del paciente con posible enfermedad cardiovascular'},
+  {n:'Cap. 244',t:'Biología básica del sistema cardiovascular'},
+  {n:'Cap. 245',t:'Epidemiología de las enfermedades cardiovasculares'},
+  {n:'Cap. 246',t:'Exploración física del aparato cardiovascular'},
+  {n:'Cap. 247',t:'Electrocardiografía'},
+  {n:'Cap. 248',t:'Imágenes cardiacas no invasivas: ecocardiografía, RMN y TC'},
+  {n:'Cap. 249',t:'Cateterismo cardiaco y angiografía coronaria'},
+  {n:'Cap. 250',t:'Principios de electrofisiología cardiaca clínica'},
+  {n:'Cap. 251',t:'Bradiarritmias: trastornos del nódulo sinoauricular'},
+  {n:'Cap. 252',t:'Bradiarritmias: trastornos del nódulo auriculoventricular'},
+  {n:'Cap. 253',t:'Valoración de las taquiarritmias supraventriculares'},
+  {n:'Cap. 254',t:'Taquicardia sinusal fisiológica y no fisiológica'},
+  {n:'Cap. 255',t:'Taquicardia auricular focal'},
+  {n:'Cap. 256',t:'Taquicardia paroxística supraventricular y síndromes de preexcitación (WPW)'},
+  {n:'Cap. 257',t:'Aleteo auricular y taquicardias auriculares por macrorreentrada'},
+  {n:'Cap. 258',t:'Fibrilación auricular'},
+  {n:'Cap. 259',t:'Estudio de las arritmias ventriculares'},
+  {n:'Cap. 260',t:'Extrasístoles ventriculares, TV no sostenida y ritmo idioventricular'},
+  {n:'Cap. 261',t:'Taquicardia ventricular sostenida'},
+  {n:'Cap. 262',t:'Taquicardia ventricular polimorfa y fibrilación ventricular'},
+  {n:'Cap. 263',t:'Tormenta eléctrica y taquicardia ventricular incesante'},
+  {n:'Cap. 264',t:'Insuficiencia cardiaca: fisiopatología y diagnóstico'},
+  {n:'Cap. 265',t:'Insuficiencia cardiaca: tratamiento'},
+  {n:'Cap. 266',t:'Clasificación de las miocardiopatías'},
+  {n:'Cap. 267',t:'Miocardiopatías genéticas'},
+  {n:'Cap. 268',t:'Miocarditis aguda y crónica'},
+  {n:'Cap. 269',t:'Miocardiopatías dilatadas'},
+  {n:'Cap. 270',t:'Amiloidosis y otras miocardiopatías restrictivas'},
+  {n:'Cap. 271',t:'Trasplante cardiaco y circulación asistida prolongada'},
+  {n:'Cap. 272',t:'Estenosis aórtica'},
+  {n:'Cap. 273',t:'Insuficiencia aórtica'},
+  {n:'Cap. 274',t:'Estenosis mitral'},
+  {n:'Cap. 275',t:'Insuficiencia mitral'},
+  {n:'Cap. 276',t:'Prolapso de la válvula mitral'},
+  {n:'Cap. 277',t:'Valvulopatía tricuspídea'},
+  {n:'Cap. 278',t:'Valvulopatía pulmonar'},
+  {n:'Cap. 279',t:'Cardiopatía valvular múltiple y mixta'},
+  {n:'Cap. 280',t:'Cardiopatías congénitas en el adulto'},
+  {n:'Cap. 281',t:'Enfermedades del pericardio'},
+  {n:'Cap. 282',t:'Mixoma auricular y otros tumores cardiacos'},
+  {n:'Cap. 283',t:'Traumatismo cardiaco'},
+  {n:'Cap. 284',t:'Cardiopatía isquémica'},
+  {n:'Cap. 285',t:'Síndrome coronario agudo sin elevación del ST (NSTEMI/angina inestable)'},
+  {n:'Cap. 286',t:'Infarto del miocardio con elevación del ST (STEMI)'},
+  {n:'Cap. 287',t:'Intervenciones coronarias percutáneas'},
+  {n:'Cap. 288',t:'Hipertensión arterial'},
+  {n:'Cap. 289',t:'Enfermedad renovascular'},
+  {n:'Cap. 290',t:'Trombosis venosa profunda y tromboembolia pulmonar'},
+  {n:'Cap. 291',t:'Enfermedades de la aorta'},
+  {n:'Cap. 292',t:'Enfermedades arteriales de las extremidades'},
+  {n:'Cap. 293',t:'Enfermedad venosa crónica y linfedema'},
+  {n:'Cap. 294',t:'Hipertensión pulmonar'},
+],
+nefro:[
+  {n:'Cap. 319',t:'Estudio del paciente con enfermedad renal o de las vías urinarias'},
+  {n:'Cap. 320',t:'Biología y fisiología celulares del riñón'},
+  {n:'Cap. 321',t:'Lesión renal aguda'},
+  {n:'Cap. 322',t:'Enfermedad renal crónica'},
+  {n:'Cap. 323',t:'Diálisis en el tratamiento de la insuficiencia renal'},
+  {n:'Cap. 324',t:'Nefrología intervencionista'},
+  {n:'Cap. 325',t:'Trasplante renal'},
+  {n:'Cap. 326',t:'Enfermedades glomerulares'},
+  {n:'Cap. 327',t:'Enfermedad renal poliquística y trastornos hereditarios tubulares'},
+  {n:'Cap. 328',t:'Enfermedades tubulointersticiales del riñón'},
+  {n:'Cap. 329',t:'Enfermedades renovasculares trombóticas'},
+  {n:'Cap. 330',t:'Nefrolitiasis'},
+  {n:'Cap. 331',t:'Obstrucción de vías urinarias'},
+  {n:'Cap. 90', t:'Adenocarcinoma renal'},
+  {n:'Cap. 91', t:'Cáncer de vejiga y vías urinarias'},
+  {n:'Cap. 92', t:'Enfermedades benignas y malignas de la próstata'},
+  {n:'Cap. 140',t:'Infecciones de las vías urinarias: cistitis, prostatitis y pielonefritis'},
+],
+gastro:[
+  {n:'Cap. 332',t:'Estudio del paciente con enfermedades gastrointestinales'},
+  {n:'Cap. 333',t:'Endoscopia gastrointestinal'},
+  {n:'Cap. 334',t:'Enfermedades del esófago'},
+  {n:'Cap. 335',t:'Enfermedad ulcerosa péptica y trastornos relacionados'},
+  {n:'Cap. 336',t:'Trastornos de la absorción'},
+  {n:'Cap. 337',t:'Enfermedad intestinal inflamatoria (Crohn, CU) y colitis microscópica'},
+  {n:'Cap. 338',t:'Síndrome de intestino irritable'},
+  {n:'Cap. 339',t:'Enfermedades vasculares del intestino'},
+  {n:'Cap. 340',t:'Enfermedades del colon y del recto'},
+  {n:'Cap. 341',t:'Enfermedades del peritoneo y el mesenterio'},
+  {n:'Cap. 342',t:'Trastornos gastrointestinales agudos: hemorragia, obstrucción, perforación'},
+  {n:'Cap. 343',t:'Enfermedades del hígado: generalidades y hepatitis aguda'},
+  {n:'Cap. 344',t:'Hepatitis crónica'},
+  {n:'Cap. 345',t:'Cirrosis hepática y sus complicaciones'},
+  {n:'Cap. 346',t:'Hipertensión portal'},
+  {n:'Cap. 347',t:'Insuficiencia hepática aguda'},
+  {n:'Cap. 348',t:'Colestasis y trastornos biliares'},
+  {n:'Cap. 349',t:'Colelitiasis, colecistitis y colangitis'},
+  {n:'Cap. 350',t:'Pancreatitis aguda'},
+  {n:'Cap. 351',t:'Pancreatitis crónica'},
+  {n:'Cap. 85', t:'Cánceres del tubo digestivo alto: esófago y estómago'},
+  {n:'Cap. 86', t:'Cáncer colorrectal'},
+  {n:'Cap. 87', t:'Tumores del hígado y vías biliares'},
+  {n:'Cap. 88', t:'Cáncer de páncreas'},
+  {n:'Cap. 89', t:'Tumores neuroendocrinos del aparato digestivo'},
+  {n:'Cap. 139',t:'Infección por Clostridioides difficile (colitis pseudomembranosa)'},
+  {n:'Cap. 168',t:'Infecciones por Helicobacter pylori'},
+],
+endocrino:[
+  {n:'Cap. 387',t:'Introducción a la endocrinología: mecanismos hormonales'},
+  {n:'Cap. 388',t:'Hipófisis anterior: fisiología hormonal'},
+  {n:'Cap. 391',t:'Hipopituitarismo'},
+  {n:'Cap. 392',t:'Síndromes de tumores hipofisarios: acromegalia, hiperprolactinemia, adenomas'},
+  {n:'Cap. 393',t:'Trastornos de la neurohipófisis: diabetes insípida y SIADH'},
+  {n:'Cap. 394',t:'Trastornos de la glándula tiroides: generalidades'},
+  {n:'Cap. 395',t:'Hipotiroidismo'},
+  {n:'Cap. 396',t:'Hipertiroidismo y otras causas de tirotoxicosis'},
+  {n:'Cap. 397',t:'Nódulos tiroideos y cáncer de tiroides'},
+  {n:'Cap. 398',t:'Enfermedades de la corteza suprarrenal: Addison, Cushing, Conn, feocromocitoma'},
+  {n:'Cap. 399',t:'Feocromocitoma y paraganglioma'},
+  {n:'Cap. 400',t:'Síndromes de neoplasia endocrina múltiple (MEN)'},
+  {n:'Cap. 401',t:'Síndromes poliendocrinos autoinmunitarios'},
+  {n:'Cap. 402',t:'Desarrollo sexual y trastornos de diferenciación'},
+  {n:'Cap. 403',t:'Enfermedades de los testículos: hipogonadismo, ginecomastia, disfunción eréctil'},
+  {n:'Cap. 404',t:'Trastornos del aparato reproductor femenino'},
+  {n:'Cap. 405',t:'Trastornos menstruales y dolor pélvico'},
+  {n:'Cap. 406',t:'Hirsutismo'},
+],
+endocrino2:[
+  {n:'Cap. 408',t:'Biopatología de la obesidad'},
+  {n:'Cap. 409',t:'Valoración y tratamiento de la obesidad'},
+  {n:'Cap. 415',t:'Diabetes mellitus: diagnóstico, clasificación y fisiopatología'},
+  {n:'Cap. 416',t:'Diabetes mellitus: tratamiento y control glucémico'},
+  {n:'Cap. 417',t:'Diabetes mellitus: complicaciones agudas y crónicas'},
+  {n:'Cap. 418',t:'Hipoglucemia'},
+  {n:'Cap. 419',t:'Trastornos del metabolismo de las lipoproteínas'},
+  {n:'Cap. 420',t:'El síndrome metabólico'},
+  {n:'Cap. 421',t:'Metabolismo óseo y mineral en salud y enfermedad'},
+  {n:'Cap. 422',t:'Enfermedades de las paratiroides e hipercalcemia'},
+  {n:'Cap. 423',t:'Osteoporosis'},
+  {n:'Cap. 424',t:'Enfermedad de Paget del hueso'},
+  {n:'Cap. 425',t:'Raquitismo y osteomalacia'},
+  {n:'Cap. 426',t:'Hemocromatosis'},
+  {n:'Cap. 427',t:'Enfermedad de Wilson'},
+  {n:'Cap. 428',t:'Las porfirias'},
+  {n:'Cap. 429',t:'Trastornos del metabolismo de las purinas y pirimidinas'},
+],
+neumo:[
+  {n:'Cap. 295',t:'Estudio del paciente con enfermedad respiratoria'},
+  {n:'Cap. 296',t:'Alteraciones de la función respiratoria'},
+  {n:'Cap. 297',t:'Procedimientos diagnósticos en enfermedades respiratorias'},
+  {n:'Cap. 298',t:'Asma'},
+  {n:'Cap. 299',t:'Neumonitis por hipersensibilidad e infiltrados pulmonares con eosinofilia'},
+  {n:'Cap. 300',t:'Neumopatías ocupacionales y ambientales'},
+  {n:'Cap. 301',t:'Bronquiectasias'},
+  {n:'Cap. 302',t:'Fibrosis quística'},
+  {n:'Cap. 303',t:'Enfermedad pulmonar obstructiva crónica (EPOC)'},
+  {n:'Cap. 304',t:'Neumopatía intersticial'},
+  {n:'Cap. 305',t:'Trastornos de la pleura'},
+  {n:'Cap. 306',t:'Enfermedades del mediastino'},
+  {n:'Cap. 307',t:'Trastornos de la ventilación'},
+  {n:'Cap. 308',t:'Apnea del sueño'},
+  {n:'Cap. 309',t:'Trasplante pulmonar'},
+  {n:'Cap. 310',t:'Medicina pulmonar intervencionista'},
+  {n:'Cap. 83', t:'Neoplasias del pulmón'},
+  {n:'Cap. 311',t:'Estudio del paciente con enfermedad crítica'},
+  {n:'Cap. 312',t:'Síndrome de insuficiencia respiratoria aguda (SIRA/ARDS)'},
+  {n:'Cap. 313',t:'Apoyo ventilatorio mecánico'},
+],
+neuro:[
+  {n:'Cap. 430',t:'Neurología: estudio del paciente'},
+  {n:'Cap. 431',t:'Diagnóstico neurológico por imágenes'},
+  {n:'Cap. 432',t:'Electroencefalografía, estudios de conducción nerviosa y EMG'},
+  {n:'Cap. 433',t:'Estudio del líquido cefalorraquídeo'},
+  {n:'Cap. 434',t:'Enfermedad vascular cerebral: isquemia y hemorragia'},
+  {n:'Cap. 435',t:'Enfermedades de la médula espinal'},
+  {n:'Cap. 436',t:'Demencia: enfermedad de Alzheimer y otras'},
+  {n:'Cap. 437',t:'Enfermedad de Parkinson y trastornos del movimiento'},
+  {n:'Cap. 438',t:'Ataxias y enfermedades cerebelosas'},
+  {n:'Cap. 439',t:'Esclerosis lateral amiotrófica y enfermedades de la motoneurona'},
+  {n:'Cap. 440',t:'Enfermedades priónicas'},
+  {n:'Cap. 441',t:'Epilepsia'},
+  {n:'Cap. 442',t:'Migraña y otras cefaleas primarias'},
+  {n:'Cap. 443',t:'Esclerosis múltiple y enfermedades desmielinizantes'},
+  {n:'Cap. 444',t:'Encefalitis autoinmunitaria'},
+  {n:'Cap. 445',t:'Neuropatías periféricas'},
+  {n:'Cap. 446',t:'Síndrome de Guillain-Barré'},
+  {n:'Cap. 447',t:'Miastenia gravis y trastornos de la unión neuromuscular'},
+  {n:'Cap. 448',t:'Miopatías'},
+  {n:'Cap. 449',t:'Trastornos del sueño'},
+  {n:'Cap. 450',t:'Tumores del sistema nervioso central'},
+  {n:'Cap. 451',t:'Neurooftalmología'},
+  {n:'Cap. 452',t:'Neuralgia del trigémino y otros trastornos de los pares craneales'},
+],
+infecto:[
+  {n:'Cap. 124',t:'Estudio del paciente con enfermedades infecciosas'},
+  {n:'Cap. 127',t:'Estudio del paciente febril con infección aguda'},
+  {n:'Cap. 131',t:'Neumonía adquirida en la comunidad'},
+  {n:'Cap. 132',t:'Absceso pulmonar'},
+  {n:'Cap. 133',t:'Endocarditis infecciosa'},
+  {n:'Cap. 134',t:'Infecciones de piel, músculo y tejidos blandos'},
+  {n:'Cap. 135',t:'Artritis infecciosa'},
+  {n:'Cap. 136',t:'Osteomielitis'},
+  {n:'Cap. 137',t:'Infecciones y abscesos intraabdominales'},
+  {n:'Cap. 138',t:'Diarreas infecciosas agudas e intoxicación alimentaria'},
+  {n:'Cap. 139',t:'Infección por Clostridioides difficile'},
+  {n:'Cap. 140',t:'Infecciones de vías urinarias: cistitis, prostatitis, pielonefritis'},
+  {n:'Cap. 142',t:'Encefalitis'},
+  {n:'Cap. 143',t:'Meningitis aguda'},
+  {n:'Cap. 144',t:'Meningitis crónica y recurrente'},
+  {n:'Cap. 145',t:'Absceso cerebral y empiema subdural'},
+  {n:'Cap. 151',t:'Infecciones neumocócicas'},
+  {n:'Cap. 152',t:'Infecciones estafilocócicas'},
+  {n:'Cap. 153',t:'Infecciones estreptocócicas'},
+  {n:'Cap. 183',t:'Tuberculosis'},
+  {n:'Cap. 184',t:'Lepra'},
+  {n:'Cap. 187',t:'Sífilis'},
+  {n:'Cap. 191',t:'Borreliosis de Lyme'},
+  {n:'Cap. 192',t:'Rickettsiosis'},
+  {n:'Cap. 197',t:'Infecciones por herpes simple'},
+  {n:'Cap. 198',t:'Infecciones por varicela-zóster'},
+  {n:'Cap. 205',t:'SARS-CoV-2 y COVID-19'},
+  {n:'Cap. 206',t:'Gripe (influenza)'},
+  {n:'Cap. 208',t:'Enfermedad por VIH: sida y trastornos relacionados'},
+  {n:'Cap. 217',t:'Micosis: histoplasmosis, coccidioidomicosis, criptococosis, candidiasis'},
+  {n:'Cap. 231',t:'Paludismo (malaria)'},
+  {n:'Cap. 315',t:'Septicemia y choque séptico'},
+],
+hemato:[
+  {n:'Cap. 65', t:'Interpretación del frotis de sangre periférica'},
+  {n:'Cap. 66', t:'Anemia y policitemia: estudio general'},
+  {n:'Cap. 102',t:'Anemia ferropénica y anemias por defecto de producción'},
+  {n:'Cap. 103',t:'Trastornos de la hemoglobina: anemia de células falciformes, talasemias'},
+  {n:'Cap. 104',t:'Anemias megaloblásticas: déficit de B12 y folato'},
+  {n:'Cap. 105',t:'Anemias hemolíticas'},
+  {n:'Cap. 107',t:'Síndromes de insuficiencia de la médula ósea: anemia aplásica'},
+  {n:'Cap. 108',t:'Policitemia vera y neoplasias mieloproliferativas'},
+  {n:'Cap. 109',t:'Leucemia mieloide aguda (LMA)'},
+  {n:'Cap. 110',t:'Leucemia mieloide crónica (LMC)'},
+  {n:'Cap. 111',t:'Leucemia linfoide aguda (LLA)'},
+  {n:'Cap. 112',t:'Leucemia linfocítica crónica (LLC)'},
+  {n:'Cap. 113',t:'Linfoma no Hodgkin'},
+  {n:'Cap. 114',t:'Linfoma de Hodgkin'},
+  {n:'Cap. 116',t:'Trastornos de las células plasmáticas: mieloma múltiple'},
+  {n:'Cap. 117',t:'Amiloidosis'},
+  {n:'Cap. 120',t:'Trastornos de las plaquetas y la pared vascular'},
+  {n:'Cap. 121',t:'Trastornos de la coagulación: hemofilia, CID'},
+  {n:'Cap. 122',t:'Trombosis arterial y venosa'},
+  {n:'Cap. 73', t:'Estudio del paciente con cáncer'},
+  {n:'Cap. 80', t:'Urgencias oncológicas'},
+  {n:'Cap. 84', t:'Cáncer de mama'},
+  {n:'Cap. 93', t:'Cáncer testicular'},
+  {n:'Cap. 94', t:'Cánceres ginecológicos'},
+  {n:'Cap. 95', t:'Tumores del sistema nervioso central'},
+],
+reuma:[
+  {n:'Cap. 353',t:'Estudio del paciente con artritis: valoración de trastornos articulares'},
+  {n:'Cap. 354',t:'Artritis reumatoide'},
+  {n:'Cap. 355',t:'Artritis psoriásica'},
+  {n:'Cap. 356',t:'Espondilitis anquilosante y espondiloartropatías'},
+  {n:'Cap. 357',t:'Artritis reactiva'},
+  {n:'Cap. 358',t:'Lupus eritematoso sistémico (LES)'},
+  {n:'Cap. 359',t:'Síndrome antifosfolípido'},
+  {n:'Cap. 360',t:'Síndrome de Sjögren'},
+  {n:'Cap. 361',t:'Esclerosis sistémica (esclerodermia)'},
+  {n:'Cap. 362',t:'Miositis inflamatoria: polimiositis y dermatomiositis'},
+  {n:'Cap. 363',t:'Síndromes de superposición y enfermedad mixta del tejido conjuntivo'},
+  {n:'Cap. 364',t:'Vasculitis: clasificación y síndromes principales'},
+  {n:'Cap. 365',t:'Granulomatosis con poliangitis (Wegener)'},
+  {n:'Cap. 366',t:'Poliarteritis nodosa y vasculitis relacionadas'},
+  {n:'Cap. 367',t:'Enfermedad de Behçet'},
+  {n:'Cap. 368',t:'Artritis inducida por cristales: gota y seudogota'},
+  {n:'Cap. 369',t:'Osteoartritis'},
+  {n:'Cap. 370',t:'Fibromialgia'},
+  {n:'Cap. 371',t:'Artritis séptica e infecciones articulares'},
+  {n:'Cap. 390',t:'Sarcoidosis'},
+],
+ci:[
+  {n:'Cap. 311',t:'Estudio del paciente con enfermedad crítica'},
+  {n:'Cap. 312',t:'SIRA / ARDS'},
+  {n:'Cap. 313',t:'Ventilación mecánica'},
+  {n:'Cap. 314',t:'Estado de choque: estudio general'},
+  {n:'Cap. 315',t:'Septicemia y choque séptico'},
+  {n:'Cap. 316',t:'Choque cardiógeno y edema pulmonar agudo'},
+  {n:'Cap. 317',t:'Colapso cardiovascular, paro cardiaco y muerte súbita'},
+  {n:'Cap. 318',t:'Enfermedades neurológicas en la UCI'},
+  {n:'Cap. 321',t:'Lesión renal aguda'},
+],
+dermato:[
+  {n:'Cap. 59', t:'Estudio del paciente con enfermedades de la piel'},
+  {n:'Cap. 60', t:'Eccema, psoriasis, acné y enfermedades cutáneas comunes'},
+  {n:'Cap. 61', t:'Manifestaciones cutáneas de la enfermedad interna'},
+  {n:'Cap. 62', t:'Enfermedades de la piel mediadas por mecanismos inmunitarios'},
+  {n:'Cap. 63', t:'Reacciones cutáneas desencadenadas por fármacos'},
+  {n:'Cap. 64', t:'Fotosensibilidad y otras reacciones a la luz solar'},
+  {n:'Cap. 81', t:'Cáncer de la piel: melanoma y no melanoma'},
+],
+farmaco:[
+  {n:'Cap. 71', t:'Principios de farmacología clínica'},
+  {n:'Cap. 72', t:'Farmacogenómica'},
+  {n:'Cap. 123',t:'Antiagregantes plaquetarios, anticoagulantes y fibrinolíticos'},
+  {n:'Cap. 149',t:'Tratamiento y profilaxis de infecciones bacterianas'},
+  {n:'Cap. 150',t:'Resistencia bacteriana a los antimicrobianos'},
+],
+mani:[
+  {n:'Cap. 14', t:'Dolor: fisiopatología y tratamiento'},
+  {n:'Cap. 15', t:'Dolor torácico'},
+  {n:'Cap. 16', t:'Dolor abdominal'},
+  {n:'Cap. 17', t:'Cefaleas'},
+  {n:'Cap. 18', t:'Lumbalgia'},
+  {n:'Cap. 20', t:'Fiebre'},
+  {n:'Cap. 21', t:'Fiebre y exantema'},
+  {n:'Cap. 22', t:'Fiebre de origen desconocido (FOD)'},
+  {n:'Cap. 23', t:'Síncope'},
+  {n:'Cap. 29', t:'Confusión y delirio'},
+  {n:'Cap. 30', t:'Coma'},
+  {n:'Cap. 31', t:'Demencia: evaluación inicial'},
+  {n:'Cap. 39', t:'Disnea'},
+  {n:'Cap. 42', t:'Hipoxia y cianosis'},
+  {n:'Cap. 43', t:'Edema'},
+  {n:'Cap. 44', t:'Soplo cardiaco: estudio del paciente'},
+  {n:'Cap. 45', t:'Palpitaciones'},
+  {n:'Cap. 49', t:'Diarrea y estreñimiento'},
+  {n:'Cap. 51', t:'Hemorragia de tubo digestivo'},
+  {n:'Cap. 52', t:'Ictericia'},
+  {n:'Cap. 55', t:'Azoemia y anomalías urinarias'},
+  {n:'Cap. 56', t:'Alteraciones de líquidos y electrólitos'},
+  {n:'Cap. 57', t:'Hipercalcemia e hipocalcemia'},
+  {n:'Cap. 58', t:'Acidosis y alcalosis'},
+  {n:'Cap. 66', t:'Anemia y policitemia'},
+  {n:'Cap. 69', t:'Hemorragia y trombosis'},
+],
+global:[
+  {n:'Cap. 1',  t:'La práctica de la medicina clínica'},
+  {n:'Cap. 6',  t:'Detección y prevención de enfermedades'},
+  {n:'Cap. 12', t:'Aspectos éticos en la medicina clínica'},
+  {n:'Cap. 13', t:'Cuidados paliativos y al final de la vida'},
+  {n:'Cap. 128',t:'Principios de inmunización'},
+  {n:'Cap. 129',t:'Principios de vacunación'},
+  {n:'Cap. 130',t:'Recomendaciones de salud para viajes internacionales'},
+  {n:'Cap. 407',t:'Salud de la mujer en medicina interna'},
+  {n:'Cap. 412',t:'Salud de personas LGBT+'},
+],
+};
+
+/* Color map */
+const CMAP = {
+  teal:  {bg:'var(--c-teal-bg)',  t:'var(--c-teal-t)'},
+  blue:  {bg:'var(--c-blue-bg)',  t:'var(--c-blue-t)'},
+  purple:{bg:'var(--c-purple-bg)',t:'var(--c-purple-t)'},
+  amber: {bg:'var(--c-amber-bg)', t:'var(--c-amber-t)'},
+  coral: {bg:'var(--c-coral-bg)', t:'var(--c-coral-t)'},
+  pink:  {bg:'var(--c-pink-bg)',  t:'var(--c-pink-t)'},
+  green: {bg:'var(--c-green-bg)', t:'var(--c-green-t)'},
+  red:   {bg:'var(--c-red-bg)',   t:'var(--c-red-t)'},
+  gray:  {bg:'var(--c-gray-bg)',  t:'var(--c-gray-t)'},
+};
+
+/* ═══════════ STATE ═══════════ */
+let currentSpec = null;
+let currentChap = null;
+const summaryCache = {};
+
+/* ═══════════ TAB ═══════════ */
+function switchTab(tab){
+  ['panelExam','panelSum'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  ['tabExam','tabSum'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById(tab==='exam'?'panelExam':'panelSum').classList.add('active');
+  document.getElementById(tab==='exam'?'tabExam':'tabSum').classList.add('active');
+  document.getElementById('examActionBar').style.display    = tab==='exam'?'flex':'none';
+  document.getElementById('summaryActionBar').style.display = (tab==='sum' && (currentSpec||currentChap))?'flex':'none';
+}
+
+/* ═══════════ SPECIALTY GRID ═══════════ */
+function initSpecGrid(){
+  const grid = document.getElementById('specGrid');
+  grid.innerHTML = SPECIALTIES.map(s=>{
+    const chaps = CHAPTERS[s.id]||[];
+    const c = CMAP[s.color]||CMAP.gray;
+    return `<div class="spec-card" onclick="openSpec('${s.id}')">
+      <div class="spec-icon" style="background:${c.bg};color:${c.t};">
+        <i class="ti ${s.icon}" aria-hidden="true"></i>
+      </div>
+      <div class="spec-name">${s.name}</div>
+      <div class="spec-count">${chaps.length} capítulos</div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════ OPEN SPECIALTY ═══════════ */
+function openSpec(specId){
+  currentSpec = specId;
+  currentChap = null;
+  const spec = SPECIALTIES.find(s=>s.id===specId);
+  const chaps = CHAPTERS[specId]||[];
+  const c = CMAP[spec.color]||CMAP.gray;
+
+  show('viewChaps');
+  document.getElementById('breadChaps').innerHTML =
+    `<span onclick="goHome()">Especialidades</span>
+     <span class="sep">›</span>
+     <span class="cur">${spec.name}</span>`;
+
+  document.getElementById('chapList').innerHTML = chaps.map((ch,i)=>`
+    <div class="chap-row" onclick="openChap('${specId}',${i})">
+      <span class="chap-num" style="background:${c.bg};color:${c.t};">${ch.n}</span>
+      <span class="chap-name">${ch.t}</span>
+      <i class="ti ti-chevron-right"></i>
+    </div>`).join('');
+
+  document.getElementById('summaryActionBar').style.display='flex';
+}
+
+/* ═══════════ OPEN CHAPTER ═══════════ */
+async function openChap(specId, idx){
+  const spec = SPECIALTIES.find(s=>s.id===specId);
+  const chap = CHAPTERS[specId][idx];
+  currentChap = {specId, idx};
+  const c = CMAP[spec.color]||CMAP.gray;
+  const cacheKey = specId+'_'+idx;
+
+  show('viewSum');
+  document.getElementById('breadSum').innerHTML =
+    `<span onclick="goHome()">Especialidades</span>
+     <span class="sep">›</span>
+     <span onclick="openSpec('${specId}')">${spec.name}</span>
+     <span class="sep">›</span>
+     <span class="cur">${chap.n}</span>`;
+
+  document.getElementById('sumHeader').innerHTML=`
+    <div class="sum-hicon" style="background:${c.bg};color:${c.t};">
+      <i class="ti ${spec.icon}" aria-hidden="true"></i>
+    </div>
+    <div>
+      <div class="sum-hlabel">Harrison 22e · ${chap.n}</div>
+      <div class="sum-htitle">${chap.t}</div>
+      <div class="sum-hsub">${spec.name} · Resumen clínico</div>
+    </div>`;
+
+  const body = document.getElementById('sumBody');
+
+  if(summaryCache[cacheKey]){
+    body.className='sum-body';
+    body.innerHTML=summaryCache[cacheKey];
+    return;
+  }
+
+  body.className='sum-body lbody';
+  body.innerHTML=`<div class="spinner"></div><p>Generando resumen…</p><small>Harrison 22e · ${chap.n}</small>`;
+
+  const sys=`Eres un profesor experto en medicina interna con dominio enciclopédico de Harrison. Principios de Medicina Interna, 22.ª edición (McGraw-Hill, 2025).
+
+Genera resúmenes clínicos estructurados, precisos y memorables para residentes que se preparan para exámenes de medicina interna.
+
+Usa EXACTAMENTE este formato (sin markdown, sin asteriscos):
+
+📌 DEFINICIÓN Y EPIDEMIOLOGÍA
+[Definición, prevalencia, grupos de riesgo — 2-3 oraciones]
+
+🔬 FISIOPATOLOGÍA
+[Mecanismo central, vías moleculares clave — conciso]
+
+🩺 CUADRO CLÍNICO
+[Síntomas y signos principales, presentación típica vs atípica]
+
+🔍 DIAGNÓSTICO
+[Criterios, estudios de primera línea, valores de corte, imágenes]
+
+💊 TRATAMIENTO
+[Primera y segunda línea, dosis relevantes, indicaciones especiales, contraindicaciones]
+
+⚠️ PERLAS PARA EL EXAMEN
+[5 puntos críticos: asociaciones patognomónicas, números que se preguntan, errores frecuentes, diagnósticos diferenciales clave]
+
+Sé preciso. Usa terminología médica correcta. Prioriza datos evaluables en examen.`;
+
+  try{
+    const r=await fetch("https://harrison-proxy.drcardeh.workers.dev",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-3-5-sonnet-20241022",
+        max_tokens:5000,
+        system:sys,
+        messages:[{role:"user",content:`Genera el resumen clínico completo del ${chap.n} del Harrison 22e: "${chap.t}". Especialidad: ${spec.name}.`}]
+      })
+    });
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`Error ${r.status}`);}
+    const data=await r.json();
+    const txt=data.content?.map(b=>b.text||'').join('')||'';
+    if(!txt)throw new Error('Sin respuesta.');
+    const html=formatSummary(txt);
+    summaryCache[cacheKey]=html;
+    body.className='sum-body';
+    body.innerHTML=html;
+  }catch(err){
+    body.className='sum-body';
+    body.innerHTML=`<div class="error-card"><i class="ti ti-alert-triangle"></i><div><strong>Error al generar</strong><br>${err.message}</div></div>`;
+  }
+}
+
+function formatSummary(txt){
+  const esc=txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return esc
+    .replace(/(📌 DEFINICIÓN Y EPIDEMIOLOGÍA)/g,'<span class="sec-lbl" style="color:var(--c-purple-t);">$1</span>')
+    .replace(/(🔬 FISIOPATOLOGÍA)/g,'<span class="sec-lbl" style="color:var(--c-teal-t);">$1</span>')
+    .replace(/(🩺 CUADRO CLÍNICO)/g,'<span class="sec-lbl" style="color:var(--c-blue-t);">$1</span>')
+    .replace(/(🔍 DIAGNÓSTICO)/g,'<span class="sec-lbl" style="color:var(--c-teal-t);">$1</span>')
+    .replace(/(💊 TRATAMIENTO)/g,'<span class="sec-lbl" style="color:var(--c-green-t);">$1</span>')
+    .replace(/(⚠️ PERLAS PARA EL EXAMEN)/g,'<span class="sec-lbl" style="color:var(--c-amber-t);">$1</span>');
+}
+
+function copySummary(){
+  const b=document.getElementById('sumBody');
+  if(b)navigator.clipboard.writeText(b.innerText);
+}
+
+/* ═══════════ SEARCH ═══════════ */
+function onSearch(){
+  const q=document.getElementById('chapSearch').value.toLowerCase().trim();
+  if(!q){
+    if(currentChap){ show('viewSum'); return; }
+    if(currentSpec){ show('viewChaps'); return; }
+    show('viewSpecs'); return;
+  }
+  const results=[];
+  SPECIALTIES.forEach(s=>{
+    const chaps=CHAPTERS[s.id]||[];
+    chaps.forEach((ch,i)=>{
+      if(ch.t.toLowerCase().includes(q)||ch.n.toLowerCase().includes(q)){
+        results.push({spec:s,chap:ch,idx:i});
+      }
+    });
+  });
+  showSearch(results, q);
+}
+
+function showSearch(results, q){
+  show('viewChaps');
+  document.getElementById('breadChaps').innerHTML=
+    `<span class="cur">Búsqueda: "${q}"</span>`;
+  if(!results.length){
+    document.getElementById('chapList').innerHTML=
+      '<p style="color:var(--text3);font-size:13px;padding:.5rem 0;">No se encontraron capítulos.</p>';
+    return;
+  }
+  document.getElementById('chapList').innerHTML=results.map(r=>{
+    const c=CMAP[r.spec.color]||CMAP.gray;
+    return `<div class="chap-row" onclick="openChap('${r.spec.id}',${r.idx})">
+      <span class="chap-num" style="background:${c.bg};color:${c.t};">${r.chap.n}</span>
+      <span class="chap-name">${r.chap.t}<br><span style="font-size:11px;color:var(--text3);">${r.spec.name}</span></span>
+      <i class="ti ti-chevron-right"></i>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════ NAV ═══════════ */
+function show(viewId){
+  ['viewSpecs','viewChaps','viewSum'].forEach(id=>{
+    document.getElementById(id).classList.toggle('vopen', id===viewId);
+  });
+}
+
+function goHome(){
+  currentSpec=null; currentChap=null;
+  document.getElementById('chapSearch').value='';
+  show('viewSpecs');
+  document.getElementById('summaryActionBar').style.display='none';
+}
+
+function goBack(){
+  if(currentChap){
+    currentChap=null;
+    openSpec(currentSpec);
+  } else if(currentSpec){
+    goHome();
+  }
+}
+
+/* ═══════════ EXAM TAB ═══════════ */
+let currentBase64=null, currentMime='image/jpeg';
+const fileInput=document.getElementById('fileInput');
+const uploadZone=document.getElementById('uploadZone');
+const previewWrap=document.getElementById('previewWrap');
+const previewImg=document.getElementById('previewImg');
+const fileNameEl=document.getElementById('fileName');
+const solveBtn=document.getElementById('solveBtn');
+const answerArea=document.getElementById('answerArea');
+
+fileInput.addEventListener('change',e=>{const f=e.target.files[0];if(f)handleFile(f);});
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('drag-over');});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop',e=>{
+  e.preventDefault();uploadZone.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/'))handleFile(f);
+});
+
+function handleFile(f){
+  currentMime=f.type||'image/jpeg';
+  fileNameEl.textContent=f.name;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    currentBase64=ev.target.result.split(',')[1];
+    previewImg.src=ev.target.result;
+    previewWrap.style.display='block';
+    uploadZone.style.display='none';
+    solveBtn.disabled=false;
+    answerArea.innerHTML='';
+  };
+  reader.readAsDataURL(f);
+}
+
+function clearImage(){
+  currentBase64=null;
+  previewWrap.style.display='none';
+  uploadZone.style.display='block';
+  fileInput.value='';
+  solveBtn.disabled=true;
+  answerArea.innerHTML='';
+}
+
+function resetAll(){ clearImage(); document.getElementById('contextInput').value=''; }
+
+async function solveQuestion(){
+  if(!currentBase64)return;
+  const extra=document.getElementById('contextInput').value.trim();
+  answerArea.innerHTML=`<div class="answer-card"><div class="loading-wrap"><div class="spinner"></div><p>Consultando Harrison 22e…</p><small>Analizando la imagen y buscando la respuesta</small></div></div>`;
+  solveBtn.disabled=true;
+
+  const sys=`Eres un experto en medicina interna con dominio enciclopédico del Harrison. Principios de Medicina Interna, 22.ª edición (McGraw-Hill, 2025). Ayudas a residentes de tercer año a resolver preguntas de examen.
+
+Para cada pregunta:
+1. Identifica el tema exacto.
+2. Indica el capítulo de Harrison 22e.
+3. Da la respuesta correcta directamente.
+4. Explica el razonamiento fisiopatológico.
+5. Agrega el dato clave más evaluable.
+
+Formato EXACTO (sin markdown):
+📌 Tema: [tema]
+📖 Harrison 22e: Capítulo [N] — [nombre]
+
+✅ Respuesta: [respuesta directa y concisa]
+
+🔬 Explicación: [razonamiento clínico basado en Harrison]
+
+💡 Perla de examen: [dato clave para no olvidar]`;
+
+  try{
+    const r=await fetch("https://harrison-proxy.drcardeh.workers.dev",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-3-5-sonnet-20241022",
+        max_tokens:1000,
+        system:sys,
+        messages:[{role:"user",content:[
+          {type:"image",source:{type:"base64",media_type:currentMime,data:currentBase64}},
+          {type:"text",text:`Resuelve esta pregunta de examen basándote en Harrison 22e.${extra?'\n\nContexto: '+extra:''}`}
+        ]}]
+      })
+    });
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||`Error ${r.status}`);}
+    const data=await r.json();
+    const txt=data.content?.map(b=>b.text||'').join('')||'';
+    if(!txt)throw new Error('Respuesta vacía.');
+    renderAnswer(txt);
+  }catch(err){
+    answerArea.innerHTML=`<div class="error-card"><i class="ti ti-alert-triangle"></i><div><strong>No se pudo obtener la respuesta</strong><br>${err.message}</div></div>`;
+  }finally{
+    solveBtn.disabled=false;
+  }
+}
+
+function renderAnswer(txt){
+  const esc=txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const html=esc
+    .replace(/📌 Tema:/g,'<span style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;">📌 Tema</span><br>')
+    .replace(/📖 Harrison 22e:/g,'<span style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;">📖 Harrison 22e</span><br>')
+    .replace(/✅ Respuesta:/g,'<span style="color:var(--c-green-t);font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;">✅ Respuesta</span><br>')
+    .replace(/🔬 Explicación:/g,'<span style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;">🔬 Explicación</span><br>')
+    .replace(/💡 Perla de examen:/g,'<span style="color:var(--c-amber-t);font-size:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;">💡 Perla de examen</span><br>');
+  answerArea.innerHTML=`
+    <div class="answer-card">
+      <div class="answer-header">
+        <i class="ti ti-stethoscope"></i>
+        <span>Respuesta basada en Harrison 22e</span>
+      </div>
+      <div class="answer-body">${html}</div>
+      <div style="padding:0 1.4rem .9rem;">
+        <button onclick="copyAnswer()"><i class="ti ti-copy"></i> Copiar respuesta</button>
+      </div>
+    </div>`;
+}
+
+function copyAnswer(){
+  const b=document.querySelector('.answer-body');
+  if(b)navigator.clipboard.writeText(b.innerText);
+}
+
+/* ═══════════ INIT ═══════════ */
+initSpecGrid();
+show('viewSpecs');
+document.getElementById('examActionBar').style.display='flex';
+</script>
+</body>
+</html>
